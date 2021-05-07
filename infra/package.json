@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
+    "precdk": "yarn run build",
     "cdk": "cdk"
   },
   "dependencies": {

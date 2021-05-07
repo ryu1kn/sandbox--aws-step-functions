@@ -29,3 +29,7 @@ yarn cdk synth
 ```
 
 then check the output file in the "cdk.out" directory.
+
+## References
+
+* [AWS Cloud Development Kit (AWS CDK) - Getting Started](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html)

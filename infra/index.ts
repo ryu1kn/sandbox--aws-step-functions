@@ -4,8 +4,8 @@ import cdk = require('@aws-cdk/core');
 import sfn = require('@aws-cdk/aws-stepfunctions');
 import sfn_tasks = require('@aws-cdk/aws-stepfunctions-tasks');
 
-class JobPollerStack extends cdk.Stack {
-    constructor(scope: cdk.App, id: string, props: cdk.StackProps = {}) {
+export class JobPollerStack extends cdk.Stack {
+    constructor(scope: cdk.App, id: string, props: cdk.StackProps) {
         super(scope, id, props);
 
         const submitJobActivity = new sfn.Activity(this, 'SubmitJob');
@@ -50,5 +50,8 @@ class JobPollerStack extends cdk.Stack {
 }
 
 const app = new cdk.App();
-new JobPollerStack(app, 'aws-stepfunctions-integ');
+const stackProps = {env: {region: 'ap-southeast-2'}};
+
+new JobPollerStack(app, 'aws-stepfunctions-integ', stackProps);
+
 app.synth();
