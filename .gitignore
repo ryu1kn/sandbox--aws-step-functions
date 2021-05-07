@@ -1,3 +1,5 @@
+/.idea
 /infra/cdk.out
 /infra/index.js
 /infra/node_modules
+*.iml
