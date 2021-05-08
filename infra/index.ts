@@ -60,6 +60,6 @@ export class JobStack extends cdk.Stack {
 const app = new cdk.App()
 const stackProps = {env: {region: 'ap-southeast-2'}}
 
-new JobStack(app, 'aws-stepfunctions-integ', stackProps)
+new JobStack(app, 'sandbox--step-functions', stackProps)
 
 app.synth()
