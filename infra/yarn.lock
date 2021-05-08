@@ -389,7 +389,7 @@
     "@aws-cdk/cx-api" "1.102.0"
     constructs "^3.3.69"
 
-"@aws-cdk/aws-logs@1.102.0":
+"@aws-cdk/aws-logs@1.102.0", "@aws-cdk/aws-logs@^1.102.0":
   version "1.102.0"
   resolved "https://registry.yarnpkg.com/@aws-cdk/aws-logs/-/aws-logs-1.102.0.tgz#0801e5e2655c5a3746f0b11e2f9c9d7035452168"
   integrity sha512-QCB3R1EIcfrpktzQczoGGBQxfscvhFi72+7lto+Tq7+Vv7MlUGJADAyYOgr/fZNDoFNulfDCL+LOMTWVnvUwQg==

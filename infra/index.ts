@@ -2,49 +2,51 @@
 
 import cdk = require('@aws-cdk/core')
 import sfn = require('@aws-cdk/aws-stepfunctions')
-import sfn_tasks = require('@aws-cdk/aws-stepfunctions-tasks')
+import {LogLevel} from '@aws-cdk/aws-stepfunctions'
+import {LogGroup, RetentionDays} from '@aws-cdk/aws-logs'
+import {EvaluateExpression} from '@aws-cdk/aws-stepfunctions-tasks'
+import {Duration} from '@aws-cdk/core'
 
 export class JobPollerStack extends cdk.Stack {
     constructor(scope: cdk.App, id: string, props: cdk.StackProps) {
         super(scope, id, props)
 
-        const submitJobActivity = new sfn.Activity(this, 'SubmitJob')
-        const checkJobActivity = new sfn.Activity(this, 'CheckJob')
-
-        const submitJob = new sfn.Task(this, 'Submit Job', {
-            task: new sfn_tasks.InvokeActivity(submitJobActivity),
-            resultPath: '$.guid'
+        const doSomeJob = new EvaluateExpression(this, 'Do some job', {
+            expression: 'Math.floor(Math.random()*3)',
+            resultPath: '$.statusCode'
         })
-        const waitX = new sfn.Wait(this, 'Wait X Seconds', {
-            time: sfn.WaitTime.secondsPath('$.wait_time')
+        const wait = new sfn.Wait(this, 'Wait', {
+            time: sfn.WaitTime.duration(Duration.seconds(2))
         })
-        const getStatus = new sfn.Task(this, 'Get Job Status', {
-            task: new sfn_tasks.InvokeActivity(checkJobActivity),
-            inputPath: '$.guid',
+        const getStatus = new EvaluateExpression(this, 'Check status code', {
+            expression: '$.statusCode === 0 ? "SUCCEEDED" : ($.statusCode === 1 ? "FAILED" : "UNKNOWN")',
             resultPath: '$.status'
         })
-        const isComplete = new sfn.Choice(this, 'Job Complete?')
-        const jobFailed = new sfn.Fail(this, 'Job Failed', {
-            cause: 'AWS Batch Job Failed',
-            error: 'DescribeJob returned FAILED'
+        const isComplete = new sfn.Choice(this, 'Job Completed?')
+        const concludeWithFailure = new sfn.Fail(this, 'Failed', {
+            cause: 'Undesirable result',
+            error: 'FAILED with an odd statusCode'
         })
-        const finalStatus = new sfn.Task(this, 'Get Final Job Status', {
-            task: new sfn_tasks.InvokeActivity(checkJobActivity),
-            inputPath: '$.guid'
+        const concludeWithSuccess = new EvaluateExpression(this, 'Succeeded', {
+            expression: '"All passed!"',
+            resultPath: '$.finalStatus'
         })
 
         const chain = sfn.Chain
-            .start(submitJob)
-            .next(waitX)
+            .start(doSomeJob)
             .next(getStatus)
             .next(isComplete
-                .when(sfn.Condition.stringEquals('$.status', 'FAILED'), jobFailed)
-                .when(sfn.Condition.stringEquals('$.status', 'SUCCEEDED'), finalStatus)
-                .otherwise(waitX))
+                .when(sfn.Condition.stringEquals('$.status', 'FAILED'), concludeWithFailure)
+                .when(sfn.Condition.stringEquals('$.status', 'SUCCEEDED'), concludeWithSuccess)
+                .otherwise(wait.next(doSomeJob)))
 
         new sfn.StateMachine(this, 'StateMachine', {
             definition: chain,
-            timeout: cdk.Duration.seconds(30)
+            timeout: cdk.Duration.seconds(30),
+            logs: {
+                destination: new LogGroup(this, 'LogGroup', {retention: RetentionDays.ONE_WEEK}),
+                level: LogLevel.ALL
+            }
         })
     }
 }

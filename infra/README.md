@@ -10,6 +10,12 @@ yarn install
 yarn run build
 ```
 
+Create resources for AWS CDK to store assets (replace `<account-id>` and `<region>`)
+
+```sh
+yarn run cdk bootstrap aws://<account-id>/<region>
+```
+
 ## Deploy
 
 ```sh
