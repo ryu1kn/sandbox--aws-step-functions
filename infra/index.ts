@@ -1,11 +1,7 @@
-// Example copied from https://github.com/aws-samples/aws-cdk-examples/tree/master/typescript/stepfunctions-job-poller
-
-import cdk = require('@aws-cdk/core')
-import sfn = require('@aws-cdk/aws-stepfunctions')
-import {LogLevel} from '@aws-cdk/aws-stepfunctions'
-import {LogGroup, RetentionDays} from '@aws-cdk/aws-logs'
+import {App, Duration, Stack, StackProps} from '@aws-cdk/core'
+import * as sfn from '@aws-cdk/aws-stepfunctions'
 import {EvaluateExpression} from '@aws-cdk/aws-stepfunctions-tasks'
-import {Duration} from '@aws-cdk/core'
+import {LogGroup, RetentionDays} from '@aws-cdk/aws-logs'
 
 enum JobStatus {
     SUCCEEDED = 'SUCCEEDED',
@@ -13,8 +9,8 @@ enum JobStatus {
     UNKNOWN = 'UNKNOWN'
 }
 
-export class JobStack extends cdk.Stack {
-    constructor(scope: cdk.App, id: string, props: cdk.StackProps) {
+export class JobStack extends Stack {
+    constructor(scope: App, id: string, props: StackProps) {
         super(scope, id, props)
 
         const doSomeJob = new EvaluateExpression(this, 'Do some job', {
@@ -48,16 +44,16 @@ export class JobStack extends cdk.Stack {
 
         new sfn.StateMachine(this, 'StateMachine', {
             definition: chain,
-            timeout: cdk.Duration.seconds(30),
+            timeout: Duration.seconds(30),
             logs: {
                 destination: new LogGroup(this, 'LogGroup', {retention: RetentionDays.ONE_WEEK}),
-                level: LogLevel.ALL
+                level: sfn.LogLevel.ALL
             }
         })
     }
 }
 
-const app = new cdk.App()
+const app = new App()
 const stackProps = {env: {region: 'ap-southeast-2'}}
 
 new JobStack(app, 'sandbox--step-functions', stackProps)
