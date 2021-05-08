@@ -7,7 +7,13 @@ import {LogGroup, RetentionDays} from '@aws-cdk/aws-logs'
 import {EvaluateExpression} from '@aws-cdk/aws-stepfunctions-tasks'
 import {Duration} from '@aws-cdk/core'
 
-export class JobPollerStack extends cdk.Stack {
+enum JobStatus {
+    SUCCEEDED = 'SUCCEEDED',
+    FAILED = 'FAILED',
+    UNKNOWN = 'UNKNOWN'
+}
+
+export class JobStack extends cdk.Stack {
     constructor(scope: cdk.App, id: string, props: cdk.StackProps) {
         super(scope, id, props)
 
@@ -18,8 +24,8 @@ export class JobPollerStack extends cdk.Stack {
         const wait = new sfn.Wait(this, 'Wait', {
             time: sfn.WaitTime.duration(Duration.seconds(2))
         })
-        const getStatus = new EvaluateExpression(this, 'Check status code', {
-            expression: '$.statusCode === 0 ? "SUCCEEDED" : ($.statusCode === 1 ? "FAILED" : "UNKNOWN")',
+        const getJobStatus = new EvaluateExpression(this, 'Check status code', {
+            expression: `$.statusCode === 0 ? "${JobStatus.SUCCEEDED}" : ($.statusCode === 1 ? "${JobStatus.FAILED}" : "${JobStatus.UNKNOWN}")`,
             resultPath: '$.status'
         })
         const isComplete = new sfn.Choice(this, 'Job Completed?')
@@ -34,10 +40,10 @@ export class JobPollerStack extends cdk.Stack {
 
         const chain = sfn.Chain
             .start(doSomeJob)
-            .next(getStatus)
+            .next(getJobStatus)
             .next(isComplete
-                .when(sfn.Condition.stringEquals('$.status', 'FAILED'), concludeWithFailure)
-                .when(sfn.Condition.stringEquals('$.status', 'SUCCEEDED'), concludeWithSuccess)
+                .when(sfn.Condition.stringEquals('$.status', JobStatus.FAILED), concludeWithFailure)
+                .when(sfn.Condition.stringEquals('$.status', JobStatus.SUCCEEDED), concludeWithSuccess)
                 .otherwise(wait.next(doSomeJob)))
 
         new sfn.StateMachine(this, 'StateMachine', {
@@ -54,6 +60,6 @@ export class JobPollerStack extends cdk.Stack {
 const app = new cdk.App()
 const stackProps = {env: {region: 'ap-southeast-2'}}
 
-new JobPollerStack(app, 'aws-stepfunctions-integ', stackProps)
+new JobStack(app, 'aws-stepfunctions-integ', stackProps)
 
 app.synth()
